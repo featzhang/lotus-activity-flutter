@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lotus_activity/pages/home_view.dart';
+import 'package:lotus_activity/pages/pomodoro_view.dart';
 
 /*
-http://tool.c7sky.com/webcolor/
  */
 void main() => runApp(const MyApp());
 
@@ -15,7 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: _title,
-      home: HomeView(),
+      home: PomodoroView(),
     );
   }
 }

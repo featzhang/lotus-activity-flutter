@@ -39,7 +39,7 @@ class MainController {
   }
 
   // 时间跳过1秒
-  void onTimeCutDown() {
+  void countdown() {
     if (_state == WorkState.working) {
       if (_currentTimeCount + 1 > LaConsts.maxWorkTimeInSecs) {
         _currentTimeCount = 0;

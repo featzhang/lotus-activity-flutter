@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:lotus_activity/components/dashboard_card.dart';
@@ -7,15 +8,16 @@ import 'package:lotus_activity/consts/all_consts.dart';
 import 'package:lotus_activity/consts/work_state_name.dart';
 import 'package:lotus_activity/controller/main_controller.dart';
 import 'package:lotus_activity/entity/all_entities.dart';
+import 'package:system_tray/system_tray.dart';
 
-class HomeView extends StatefulWidget {
-  const HomeView({Key? key}) : super(key: key);
+class PomodoroView extends StatefulWidget {
+  const PomodoroView({Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => HomeViewState();
+  State<StatefulWidget> createState() => PomodoroViewState();
 }
 
-class HomeViewState extends State<StatefulWidget> {
+class PomodoroViewState extends State<StatefulWidget> {
   double _currentValue = 10;
 
   final TaskEntity currentTask = const TaskEntity("this is the first task!");
@@ -32,23 +34,24 @@ class HomeViewState extends State<StatefulWidget> {
   @override
   void initState() {
     super.initState();
-    var onWorkStateChanged = () => {
+    onWorkStateChanged() => {
           setState(() {
             _stateName = mainController.getStateInfo().left;
           })
         };
-    VoidCallback onWorkTimeOut = () => _doShowWorkTimeOutDialog();
-    VoidCallback onRestTimeOut = () => _doShowRestTimeDialog();
+    onWorkTimeOut() => _doShowWorkTimeOutDialog();
+    onRestTimeOut() => _doShowRestTimeDialog();
     mainController =
         MainController(onWorkStateChanged, onWorkTimeOut, onRestTimeOut);
     _startTimer();
+    initSystemTray();
   }
 
   _startTimer() {
     const period = Duration(seconds: 1);
     _timer = Timer.periodic(period, (timer) {
-      mainController.onTimeCutDown();
-      var newProcess = mainController.getProcess();
+      mainController.countdown();
+      double newProcess = mainController.getProcess();
       if (newProcess != _currentValue) {
         developer.log("sliderValue: " +
             _currentValue.toString() +
@@ -99,7 +102,7 @@ class HomeViewState extends State<StatefulWidget> {
             tooltip: 'Show Snackbar',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('This is a snackbar')));
+                  const SnackBar(content: Text('This is a snackbar, which is used to show tap message!')));
             },
           ),
           IconButton(
@@ -229,8 +232,8 @@ class HomeViewState extends State<StatefulWidget> {
     mainController.stopCurrentTask();
   }
 
-  ElevatedButton _createTextButton(@required String buttonContent,
-          IconData iconData, MaterialColor color, VoidCallback? callback) =>
+  ElevatedButton _createTextButton(String buttonContent, IconData iconData,
+          MaterialColor color, VoidCallback? callback) =>
       ElevatedButton(
         onPressed: callback,
         child: Column(
@@ -258,7 +261,7 @@ class HomeViewState extends State<StatefulWidget> {
   }
 
   void _doShowWorkTimeOutDialog() {
-    Future<Null> then = showDialog<Null>(
+    showDialog<Null>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -278,7 +281,7 @@ class HomeViewState extends State<StatefulWidget> {
             ),
           ),
           actions: <Widget>[
-            new FlatButton(
+            TextButton(
               child: new Text('确定'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -291,6 +294,39 @@ class HomeViewState extends State<StatefulWidget> {
       print(val);
     });
   }
+  Future<void> initSystemTray() async {
+    String path =
+    Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app.png';
 
+    final AppWindow appWindow = AppWindow();
+    final SystemTray systemTray = SystemTray();
+
+    // We first init the systray menu
+    await systemTray.initSystemTray(
+      title: "system tray",
+      iconPath: path,
+    );
+
+    // create context menu
+    final Menu menu = Menu();
+    await menu.buildFrom([
+      MenuItemLabel(label: 'Show', onClicked: (menuItem) => appWindow.show()),
+      MenuItemLabel(label: 'Hide', onClicked: (menuItem) => appWindow.hide()),
+      MenuItemLabel(label: 'Exit', onClicked: (menuItem) => appWindow.close()),
+    ]);
+
+    // set context menu
+    await systemTray.setContextMenu(menu);
+
+    // handle system tray event
+    systemTray.registerSystemTrayEventHandler((eventName) {
+      debugPrint("eventName: $eventName");
+      if (eventName == kSystemTrayEventClick) {
+        Platform.isWindows ? appWindow.show() : systemTray.popUpContextMenu();
+      } else if (eventName == kSystemTrayEventRightClick) {
+        Platform.isWindows ? systemTray.popUpContextMenu() : appWindow.show();
+      }
+    });
+  }
   _doShowRestTimeDialog() {}
 }
