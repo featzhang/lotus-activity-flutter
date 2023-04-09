@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:ffi';
 import 'package:timelines/timelines.dart';
 import 'dart:io';
 
@@ -21,7 +22,9 @@ class PomodoroView extends StatefulWidget {
 class PomodoroViewState extends State<StatefulWidget> {
   double _currentValue = 10;
 
-  final TaskEntity currentTask = const TaskEntity("this is the first task!");
+  final TaskEntity currentTask = TaskEntity(
+      "this is the first task!", DateTime.now().millisecondsSinceEpoch);
+  List<TaskEntity> taskList = List.empty(growable: true);
   late String _stateName = WorkStateUtils.getName(WorkState.notStart);
   late String _stateTimeInCard = "";
 
@@ -118,7 +121,7 @@ class PomodoroViewState extends State<StatefulWidget> {
                     ),
                     body: Center(
                       child: Text(
-                        currentTask.name,
+                        currentTask.title,
                         style: TextStyle(
                           fontSize: 24,
                         ),
@@ -137,17 +140,17 @@ class PomodoroViewState extends State<StatefulWidget> {
           child: Column(
             children: <Widget>[
               Wrap(
-                children: [
+                children: const [
                   // _buildTipCard("new card title", "30", 2),
-                  const DashboardCard(
+                  DashboardCard(
                     title: "单次最长工作",
                     body: "30",
                   ),
-                  const DashboardCard(
+                  DashboardCard(
                     title: "今日番茄数目",
                     body: "30",
                   ),
-                  const DashboardCard(
+                  DashboardCard(
                     title: "今日计划代办",
                     body: "30",
                   ),
@@ -174,7 +177,8 @@ class PomodoroViewState extends State<StatefulWidget> {
                       max: 200,
                       min: 0,
                       label: _currentValue.round().toString(),
-                      onChanged: _onSliderChange,
+                      onChanged: (d) => {},
+                      // do nothing
                       activeColor: Colors.red,
                       divisions: 200,
                     ),
@@ -190,25 +194,32 @@ class PomodoroViewState extends State<StatefulWidget> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     _createTextButton(
-                      "run",
+                      "Start",
                       Icons.double_arrow,
                       Colors.red,
                       () => _onStartButtonPressed(),
                     ),
                     _createTextButton(
-                      "break",
+                      "Break",
                       Icons.power_settings_new,
                       Colors.lightGreen,
-                      () => _onWeekButtonPressed(),
+                      () => _onRestButtonPressed(),
                     ),
                     _createTextButton(
-                      "finished",
+                      "Done",
                       Icons.done,
                       Colors.lightGreen,
                       () => _onFinishButtonPressed(),
                     ),
                   ],
                 ),
+              ),
+              Row(
+                children: const [
+                  SizedBox(
+                    height: 20,
+                  )
+                ],
               ),
               Center(
                 child: SizedBox(
@@ -222,15 +233,22 @@ class PomodoroViewState extends State<StatefulWidget> {
                       addRepaintBoundaries: false,
                       oppositeContentsBuilder: (context, index) => Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Text('opposite\ncontents\n$index'),
+                        child: Column(
+                          children: [
+                            Text("Catalog"),
+                            Text(
+                              taskList[index].createTimeInMillis.toString(),
+                            ),
+                          ],
+                        ),
                       ),
                       contentsBuilder: (context, index) => Card(
                         child: Padding(
                           padding: const EdgeInsets.all(14.0),
-                          child: Text('Contents: \n $index'),
+                          child: Text(taskList[index].title),
                         ),
                       ),
-                      itemCount: 10,
+                      itemCount: taskList.length,
                     ),
                   ),
                 ),
@@ -244,17 +262,11 @@ class PomodoroViewState extends State<StatefulWidget> {
     );
   }
 
-  _onSliderChange(double value) {
-    setState(() {
-      _currentValue = value;
-    });
-  }
-
   _onStartButtonPressed() {
     mainController.startNewTask();
   }
 
-  _onWeekButtonPressed() {
+  _onRestButtonPressed() {
     mainController.stopCurrentTask();
   }
 
@@ -287,6 +299,11 @@ class PomodoroViewState extends State<StatefulWidget> {
   }
 
   void _doShowWorkTimeOutDialog() {
+    setState(() {
+      developer.log("add new task to list start...");
+      taskList.add(currentTask);
+      developer.log("add new task to list done...");
+    });
     showDialog<Null>(
       context: context,
       barrierDismissible: false,
@@ -338,6 +355,7 @@ class PomodoroViewState extends State<StatefulWidget> {
     await menu.buildFrom([
       MenuItemLabel(label: 'Show', onClicked: (menuItem) => appWindow.show()),
       MenuItemLabel(label: 'Hide', onClicked: (menuItem) => appWindow.hide()),
+      MenuSeparator(),
       MenuItemLabel(label: 'Exit', onClicked: (menuItem) => appWindow.close()),
     ]);
 

@@ -1,5 +1,5 @@
-abstract class CountDownObserver {
-  void update(int timeInSec);
+class CountdownObserver {
+  void update(int timeInSec) {}
 
-  void onTimeout();
+  void onTimeout() {}
 }

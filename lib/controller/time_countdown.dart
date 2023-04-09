@@ -15,7 +15,7 @@ class TimeCountdown {
   late bool _isRunning = false;
   late int _secondsRemaining;
 
-  CountDownObserver countDownObserver;
+  CountdownObserver countDownObserver;
 
   // 初始化
   void init(TimeMode timeMode) {
