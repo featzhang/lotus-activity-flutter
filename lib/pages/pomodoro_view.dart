@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:timelines/timelines.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -92,7 +93,6 @@ class PomodoroViewState extends State<StatefulWidget> {
 
   @override
   Widget build(BuildContext context) {
-    developer.log("new slider value : " + _currentValue.round().toString());
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lotus Activity'),
@@ -101,8 +101,9 @@ class PomodoroViewState extends State<StatefulWidget> {
             icon: const Icon(Icons.yard),
             tooltip: 'Show Snackbar',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('This is a snackbar, which is used to show tap message!')));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text(
+                      'This is a snackbar, which is used to show tap message!')));
             },
           ),
           IconButton(
@@ -208,6 +209,31 @@ class PomodoroViewState extends State<StatefulWidget> {
                     ),
                   ],
                 ),
+              ),
+              Center(
+                child: SizedBox(
+                  height: 400,
+                  child: Timeline.tileBuilder(
+                    builder: TimelineTileBuilder.fromStyle(
+                      contentsAlign: ContentsAlign.basic,
+                      indicatorStyle: IndicatorStyle.outlined,
+                      connectorStyle: ConnectorStyle.dashedLine,
+                      addSemanticIndexes: false,
+                      addRepaintBoundaries: false,
+                      oppositeContentsBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text('opposite\ncontents\n$index'),
+                      ),
+                      contentsBuilder: (context, index) => Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: Text('Contents: \n $index'),
+                        ),
+                      ),
+                      itemCount: 10,
+                    ),
+                  ),
+                ),
               )
             ],
             mainAxisAlignment: MainAxisAlignment.start,
@@ -294,9 +320,9 @@ class PomodoroViewState extends State<StatefulWidget> {
       print(val);
     });
   }
+
   Future<void> initSystemTray() async {
-    String path =
-    Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app.png';
+    String path = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app.png';
 
     final AppWindow appWindow = AppWindow();
     final SystemTray systemTray = SystemTray();
@@ -328,5 +354,6 @@ class PomodoroViewState extends State<StatefulWidget> {
       }
     });
   }
+
   _doShowRestTimeDialog() {}
 }
